@@ -91,14 +91,16 @@ pclm.confidence <- function(X, ci.level, pclm.type) {
 #' Build Composition Matrices
 #' @inheritParams pclm.fit
 #' @keywords internal
+# out.step is bin size we want in ungrouped data
 build_C_matrix <- function(x, y, nlast, offset, out.step, pclm.type) {
   # Build C matrix in the age direction
   nx <- length(x)
-  gx <- seq(min(x), max(x) + nlast - out.step, by = out.step)
-  gu <- c(diff(x), nlast)/out.step
+  gx <- seq(min(x), max(x) + nlast - out.step, by = out.step) # creates ungrouped bins, apart from last bin (left out, e.g. last bin is 115, then if out.step = 0.5, last bin in gx is 110.5)
+  gu <- c(diff(x), nlast)/out.step # creates vector to show how many ungrouped bins there are for each bin in the data
   CA <- matrix(0, nrow = nx, ncol = sum(gu), dimnames = list(x, gx))
   xr <- c(x[-1], max(x) + nlast)
-  for (j in 1:nx) CA[j, which(gx >= x[j] & gx < xr[j])] <- 1
+  for (j in 1:nx) CA[j, which(gx >= x[j] & gx < xr[j])] <- 1 # fills up columns in C matrix with 1, if the ungrouped bin is smaller than
+  ## actual bin in data and smaller than next bin in data
   
   # Build C matrix in the year direction
   if (pclm.type == "1D") {
@@ -134,7 +136,7 @@ build_B_spline_basis <- function(X, Y, kr, deg, diff, pclm.type) {
     zr   <- max(Z)
     zmin <- zl - 0.01 * (zr - zl)
     zmax <- zr + 0.01 * (zr - zl)
-    ndx  <- trunc(length(Z)/kr) # number of internal knots
+    ndx  <- trunc(length(Z)/kr) # number of internal knots, trunc rundet Zahlen ab, egal wie gross sie sind!
     B    <- MortSmooth_bbase(x = Z, zmin, zmax, ndx, deg) 
     dg   <- diag(ncol(B))
     D    <- diff(dg, diff = diff)
